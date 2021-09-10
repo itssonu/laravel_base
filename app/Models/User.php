@@ -23,6 +23,11 @@ class User extends Authenticatable
         'number',
         'email',
         'password',
+        'otp',
+        'otp_flag',
+        'otp_time',
+        'status',
+        'company_id',
     ];
 
     /**
