@@ -287,4 +287,66 @@ class User extends Authenticatable
         }
         return array("message" => $message, "data" => [], "status" => 200);
     }
+
+    function sendForgetPasswordLink($request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email|exists:users',
+        ]);
+
+        if ($validator->fails()) {
+            $data = $validator->errors();
+            return array("data" => $data, "status_code" => 204);
+        } else {
+
+            $token = Str::random(64);
+
+            DB::table('password_resets')->where('email', $request->email)->delete();
+            DB::table('password_resets')->insert([
+                'email' => $request->email,
+                'token' => $token,
+                'created_at' => Carbon::now()
+            ]);
+
+            Mail::send('email.forgetPassword', ['token' => $token], function ($message) use ($request) {
+                $message->to($request->email);
+                $message->subject('Reset Password');
+            });
+
+            return array("message" =>  'We have e-mailed your password reset link!', "data" => [], "status" => 200);
+        }
+    }
+
+    function changePassword($request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email|exists:users',
+            'password' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            $data = $validator->errors();
+            return array("data" => $data, "status_code" => 204);
+        } else {
+        }
+
+
+        $updatePassword = DB::table('password_resets')
+            ->where([
+                'email' => $request->email,
+                'token' => $request->token
+            ])
+            ->first();
+
+        if (!$updatePassword) {
+            return array("message" => 'Invalid token!', "data" => [], "status" => 204);
+        }
+
+        $user = User::where('email', $request->email)
+            ->update(['password' => Hash::make($request->password)]);
+
+        DB::table('password_resets')->where(['email' => $request->email])->delete();
+
+        return array("message" => 'Your password has been changed!', "data" => [], "status" => 200);
+    }
 }

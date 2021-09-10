@@ -44,4 +44,25 @@ class Generalcontroller extends Controller
         $return = $user->verifyEmail($token);
         exit(json_encode($return));
     }
+
+    public function sendForgetPasswordLink(Request $request)
+    {
+        $user = new User();
+        $return = $user->sendForgetPasswordLink($request);
+        exit(json_encode($return));
+    }
+
+    public function changePassword($token = null)
+    {
+        $email = DB::table('password_resets')->where('token', $token)->first();
+        if (empty($email)) {
+            return redirect('/forget-password')->with('error', 'Invalid token, Please request new password reset!');
+        }
+        return view('common.changePassword', ['token' => $token, 'email' => $email->email]);
+    }
+
+    public function changePasswordPost(Request $request)
+    {
+        dd("bv");
+    }
 }

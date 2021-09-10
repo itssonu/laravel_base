@@ -13,6 +13,15 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+/*
+|--------------------------------------------------------------------------
+| Controllers path  
+|--------------------------------------------------------------------------
+*/
+use App\Http\Controllers\Generalcontroller;
+
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('changePassword/{token?}', [Generalcontroller::class, 'changePassword'])->name('change.password.get');

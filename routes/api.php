@@ -31,4 +31,5 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::post('login', [Generalcontroller::class, 'login']);
 Route::post('signup', [Generalcontroller::class, 'signup']);
 Route::get('account/verify/{token}', [Generalcontroller::class, 'verifyUser'])->name('user.verify');
-Route::post('sendForgetPassword', [Generalcontroller::class, 'sendForgetPassword']);
+Route::post('sendForgetPasswordLink', [Generalcontroller::class, 'sendForgetPasswordLink']);
+Route::post('changePassword', [Generalcontroller::class, 'changePasswordPost'])->name('change.password.post');
