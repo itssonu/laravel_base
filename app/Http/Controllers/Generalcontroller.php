@@ -10,6 +10,14 @@ use Auth;
 
 class Generalcontroller extends Controller
 {
+    public function signup(Request $request)
+    {
+        $user = new User();
+        $return = $user->signup($request);
+        exit(json_encode($return));
+    }
+
+
     public function login(Request $request)
     {
         $login_type = $request->login_type;

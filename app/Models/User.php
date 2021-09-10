@@ -12,6 +12,8 @@ use Response;
 use App\Models\User;
 use Auth;
 use Illuminate\Support\Facades\Validator;
+use Hash;
+
 
 
 class User extends Authenticatable
@@ -24,7 +26,7 @@ class User extends Authenticatable
      * @var string[]
      */
     protected $fillable = [
-        'firts_name',
+        'first_name',
         'last_name',
         'number',
         'email',
@@ -172,5 +174,45 @@ class User extends Authenticatable
                 return $result;
             }
         }
+    }
+
+    public function signup($request)
+    {
+
+        $validator = Validator::make($request->all(), [
+            'first_name' => 'required|regex:/^[a-zA-Z]+$/u',
+            'last_name' => 'required|regex:/^[a-zA-Z]+$/u',
+            'number' => 'required|numeric|unique:users',
+            'email' => 'required|email|unique:users',
+            // 'password' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            $data = $validator->errors();
+            return array("data" => $data, "status_code" => 204);
+        } else {
+            $first_name = $request->first_name;
+            $last_name = $request->last_name;
+            $email = $request->email;
+            $number = $request->number;
+            $password = $request->password;
+            // $device_type = $request->device_type;
+            // $device_token = $request->device_token;
+        }
+
+
+        $data = [
+            'first_name' => $first_name,
+            'last_name' => $last_name,
+            'email' => $email,
+            'mobile' => $number,
+            'password' => Hash::make($password),
+            // 'company_id' => $company_id,
+            // 'device_type' => $device_type,
+            // 'device_token' => $device_token,
+        ];
+        // dd($data);
+        $data = User::create($data)->toArray();
+        return array("message" => "Signup Successfully", "data" => $data, "status_code" => 200);
     }
 }
