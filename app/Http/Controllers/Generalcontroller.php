@@ -37,4 +37,11 @@ class Generalcontroller extends Controller
             exit(json_encode($return));
         }
     }
+
+    public function verifyUser($token)
+    {
+        $user = new User();
+        $return = $user->verifyEmail($token);
+        exit(json_encode($return));
+    }
 }

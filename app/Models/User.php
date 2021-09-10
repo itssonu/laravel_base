@@ -10,9 +10,13 @@ use Laravel\Sanctum\HasApiTokens;
 
 use Response;
 use App\Models\User;
+use App\Models\UserVerify;
 use Auth;
 use Illuminate\Support\Facades\Validator;
 use Hash;
+use DB;
+use Str;
+use Mail;
 
 
 
@@ -83,6 +87,31 @@ class User extends Authenticatable
 
 
             if (Auth::attempt($auth_data)) {
+                if (Auth::user()->is_email_verified == 0) {
+
+                    DB::beginTransaction();
+                    try {
+                        $token = Str::random(64);
+
+                        UserVerify::where('user_id', Auth::user()->id)->delete();
+                        UserVerify::create([
+                            'user_id' => Auth::user()->id,
+                            'token' => $token
+                        ]);
+
+                        Mail::send('mail.signup_success', ['token' => $token], function ($message) use ($request) {
+                            $message->to(Auth::user()->email);
+                            $message->subject('Email Verification Mail');
+                        });
+
+                        Auth::logout();
+                        DB::commit();
+                        return array("message" => 'You need to confirm your account. We have sent you an activation code again, please check your email.', "data" => [], "status_code" => 200);
+                    } catch (\Throwable $th) {
+                        DB::rollback();
+                        return array("message" => 'something went wrong in sending reverification link', "data" => [], "status_code" => 204);
+                    }
+                }
                 $data = Auth::user()->toArray();
                 // dd($data);
                 return array("data" => $data, "status_code" => 200);
@@ -184,7 +213,7 @@ class User extends Authenticatable
             'last_name' => 'required|regex:/^[a-zA-Z]+$/u',
             'number' => 'required|numeric|unique:users',
             'email' => 'required|email|unique:users',
-            // 'password' => 'required',
+            'password' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -198,21 +227,64 @@ class User extends Authenticatable
             $password = $request->password;
             // $device_type = $request->device_type;
             // $device_token = $request->device_token;
+
+
+
+            DB::beginTransaction();
+            try {
+                $data = [
+                    'first_name' => $first_name,
+                    'last_name' => $last_name,
+                    'email' => $email,
+                    'number' => $number,
+                    'password' => Hash::make($password),
+                    // 'company_id' => $company_id,
+                    // 'device_type' => $device_type,
+                    // 'device_token' => $device_token,
+                ];
+
+                $user = User::create($data)->toArray();
+
+                $token = Str::random(64);
+
+                UserVerify::where('user_id', $user['id'])->delete();
+                UserVerify::create([
+                    'user_id' => $user['id'],
+                    'token' => $token
+                ]);
+
+                Mail::send('mail.signup_success', ['token' => $token], function ($message) use ($request) {
+                    $message->to($request->email);
+                    $message->subject('Email Verification Mail');
+                });
+
+                DB::commit();
+                return array("message" => "Signup Successfully, verify your email", "data" => $data, "status_code" => 200);
+            } catch (\Exception $ex) {
+                DB::rollback();
+                return array("message" => 'Something went wrong. Please try again', "data" => [], "status" => 204);
+            }
         }
+    }
 
+    function verifyEmail($token)
+    {
+        $verifyUser = UserVerify::where('token', $token)->first();
 
-        $data = [
-            'first_name' => $first_name,
-            'last_name' => $last_name,
-            'email' => $email,
-            'mobile' => $number,
-            'password' => Hash::make($password),
-            // 'company_id' => $company_id,
-            // 'device_type' => $device_type,
-            // 'device_token' => $device_token,
-        ];
-        // dd($data);
-        $data = User::create($data)->toArray();
-        return array("message" => "Signup Successfully", "data" => $data, "status_code" => 200);
+        $message = 'Sorry your email cannot be identified.';
+
+        if (!is_null($verifyUser)) {
+            $user = $verifyUser->user;
+
+            if (!$user->is_email_verified) {
+                $verifyUser->user->is_email_verified = 1;
+                $verifyUser->user->status = 1;
+                $verifyUser->user->save();
+                $message = "Your e-mail is verified. You can now login.";
+            } else {
+                $message = "Your e-mail is already verified. You can now login.";
+            }
+        }
+        return array("message" => $message, "data" => [], "status" => 200);
     }
 }
