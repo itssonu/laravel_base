@@ -328,25 +328,24 @@ class User extends Authenticatable
             $data = $validator->errors();
             return array("data" => $data, "status_code" => 204);
         } else {
+
+            $updatePassword = DB::table('password_resets')
+                ->where([
+                    'email' => $request->email,
+                    'token' => $request->token
+                ])
+                ->first();
+
+            if (!$updatePassword) {
+                return array("message" => 'Invalid token!', "data" => [], "status" => 204);
+            }
+
+            $user = User::where('email', $request->email)
+                ->update(['password' => Hash::make($request->password)]);
+
+            DB::table('password_resets')->where(['email' => $request->email])->delete();
+
+            return array("message" => 'Your password has been changed!', "data" => [], "status" => 200);
         }
-
-
-        $updatePassword = DB::table('password_resets')
-            ->where([
-                'email' => $request->email,
-                'token' => $request->token
-            ])
-            ->first();
-
-        if (!$updatePassword) {
-            return array("message" => 'Invalid token!', "data" => [], "status" => 204);
-        }
-
-        $user = User::where('email', $request->email)
-            ->update(['password' => Hash::make($request->password)]);
-
-        DB::table('password_resets')->where(['email' => $request->email])->delete();
-
-        return array("message" => 'Your password has been changed!', "data" => [], "status" => 200);
     }
 }
