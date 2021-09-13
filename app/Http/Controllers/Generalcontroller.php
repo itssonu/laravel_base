@@ -59,8 +59,15 @@ class Generalcontroller extends Controller
         if (empty($email)) {
             $return = array('message' => 'Invalid token, Please request new password reset!', 'data' => [], 'status' => 204);
             exit(json_encode($return));
+        } else {
+            $token_time = strtotime($email->created_at);
+            $current_time = strtotime(date('Y-m-d H:i:s'));
+            $diff_min =  round(abs($current_time - $token_time) / 60, 2);
+            if ($diff_min > 15) {
+                return array("message" => 'Link is expired', "data" => [], "status" => 204);
+            }
+            return view('common.changePassword', ['token' => $token, 'email' => $email->email]);
         }
-        return view('common.changePassword', ['token' => $token, 'email' => $email->email]);
     }
 
     public function changePasswordGet($token = null)
