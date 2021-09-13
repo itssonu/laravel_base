@@ -271,17 +271,25 @@ class User extends Authenticatable
     function verifyEmail($token)
     {
         $verifyUser = UserVerify::where('token', $token)->first();
-
+        // dd($verifyUser);
         $message = 'Sorry your email cannot be identified.';
 
         if (!is_null($verifyUser)) {
             $user = $verifyUser->user;
 
             if (!$user->is_email_verified) {
+                $token_time = strtotime($verifyUser->created_at);
+                $current_time = strtotime(date('Y-m-d H:i:s'));
+                $diff_min =  round(abs($current_time - $token_time) / 60, 2);
+                if ($diff_min > 15) {
+                    return array("message" => 'Link is expired', "data" => [], "status" => 204);
+                }
+
                 $verifyUser->user->is_email_verified = 1;
                 $verifyUser->user->status = 1;
                 $verifyUser->user->save();
                 $message = "Your e-mail is verified. You can now login.";
+                $verifyUser->delete();
             } else {
                 $message = "Your e-mail is already verified. You can now login.";
             }
