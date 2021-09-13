@@ -9,7 +9,7 @@
                 
                 <h3 class="login-box-msg">Change Password</h3>
                 
-                <form action="{{ url('change-password') }}" method="post" oninput='password_confirmation.setCustomValidity(password_confirmation.value != password.value ? "Passwords do not match." : "")'>
+                <form action="{{ url('api/changePassword') }}" method="post" oninput='password_confirmation.setCustomValidity(password_confirmation.value != password.value ? "Passwords do not match." : "")'>
                     @csrf
                     <input type="hidden" name="token" value="{{@$token}}">
                     <div id="password_block">
@@ -21,10 +21,12 @@
                         <div class="input-group mb-3" >
                 
                            <input type="password" name="password" placeholder="Password" class="form-control" id="password" required="">
+                           @if (@$errors)
                            @if($errors->has('password'))
                            <span class="invalid-feedback" style="display: block;text-align:left;">
                                {{ $errors->first('password') }}
                            </span>
+                       `   @endif
                        @endif
                         </div>
                      

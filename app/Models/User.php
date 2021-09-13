@@ -17,6 +17,7 @@ use Hash;
 use DB;
 use Str;
 use Mail;
+use Carbon\Carbon;
 
 
 
@@ -308,7 +309,7 @@ class User extends Authenticatable
                 'created_at' => Carbon::now()
             ]);
 
-            Mail::send('email.forgetPassword', ['token' => $token], function ($message) use ($request) {
+            Mail::send('mail.forgetPassword', ['token' => $token], function ($message) use ($request) {
                 $message->to($request->email);
                 $message->subject('Reset Password');
             });

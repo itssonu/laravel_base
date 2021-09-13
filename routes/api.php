@@ -32,4 +32,5 @@ Route::post('login', [Generalcontroller::class, 'login']);
 Route::post('signup', [Generalcontroller::class, 'signup']);
 Route::get('account/verify/{token}', [Generalcontroller::class, 'verifyUser'])->name('user.verify');
 Route::post('sendForgetPasswordLink', [Generalcontroller::class, 'sendForgetPasswordLink']);
-Route::post('changePassword', [Generalcontroller::class, 'changePasswordPost'])->name('change.password.post');
+Route::get('changePassword/{token?}', [Generalcontroller::class, 'changePasswordGet'])->name('user.changepassword.get');
+Route::post('changePassword', [Generalcontroller::class, 'changePasswordPost'])->name('user.changepassword.post');

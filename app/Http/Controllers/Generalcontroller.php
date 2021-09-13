@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Validator;
 use Response;
 use App\Models\User;
 use Auth;
+use DB;
 
 class Generalcontroller extends Controller
 {
@@ -56,13 +57,26 @@ class Generalcontroller extends Controller
     {
         $email = DB::table('password_resets')->where('token', $token)->first();
         if (empty($email)) {
-            return redirect('/forget-password')->with('error', 'Invalid token, Please request new password reset!');
+            $return = array('message' => 'Invalid token, Please request new password reset!', 'data' => [], 'status' => 204);
+            exit(json_encode($return));
+        }
+        return view('common.changePassword', ['token' => $token, 'email' => $email->email]);
+    }
+
+    public function changePasswordGet($token = null)
+    {
+        $email = DB::table('password_resets')->where('token', $token)->first();
+        if (empty($email)) {
+            $return = array('message' => 'Invalid token, Please request new password reset!', 'data' => [], 'status' => 204);
+            exit(json_encode($return));
         }
         return view('common.changePassword', ['token' => $token, 'email' => $email->email]);
     }
 
     public function changePasswordPost(Request $request)
     {
-        dd("bv");
+        $user = new User();
+        $return = $user->changePassword($request);
+        exit(json_encode($return));
     }
 }
